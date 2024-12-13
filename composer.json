@@ -1,7 +1,7 @@
 {
     "name": "z3rka/queryfi",
     "type": "library",
-    "description": "It makes the frontend communicate with ease with the Laravel backend.",
+    "description": "A laravel package which makes the frontend(js/ts) talk with the backend easier.",
     "keywords": [
         "php",
         "package"
