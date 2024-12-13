@@ -1,48 +1,40 @@
-name: Release
-
-on:
-  push:
-    branches:
-      - "main" # Trigger on push to the main branch
-      - "next" # Trigger on push to the next branch
-
 jobs:
   release:
     runs-on: ubuntu-latest
-
     steps:
-      # Checkout code
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Set up PHP
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: "8.4" # Or your desired PHP version
+          php-version: "8.4"
 
-      # Install Composer dependencies
       - name: Install Composer dependencies
         run: |
           curl -sS https://getcomposer.org/installer | php
           php composer.phar install --no-interaction --prefer-dist
 
-      # Set up Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: "20"
 
-      # Install Node.js dependencies
       - name: Install Node.js dependencies
         run: npm install
 
-      # Publish the Laravel package to Packagist
+      - name: Run semantic-release
+        run: npx semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # Publish to Packagist after semantic-release
       - name: Publish to Packagist
         run: |
           curl -sS https://getcomposer.org/installer | php
-          php composer.phar config --global github-oauth.github.com ${{ secrets.GH_TOKEN }}
+          php composer.phar config --global github-oauth.github.com ${{ secrets.GITHUB_TOKEN }}
           php composer.phar publish
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PACKAGIST_API_KEY: ${{ secrets.PACKAGIST_API_KEY }}
