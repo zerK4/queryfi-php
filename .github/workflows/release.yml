@@ -2,38 +2,54 @@ name: Release
 
 on:
   push:
-    tags:
-      - "v*" # Triggers the release workflow when a tag matching 'v*' is pushed.
+    branches:
+      - 'main'  # Trigger on push to the main branch
+      - 'next'  # Trigger on push to the next branch
 
 jobs:
   release:
     runs-on: ubuntu-latest
 
     steps:
+      # Checkout code
       - name: Checkout code
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0 # Ensure full history to work with tags
 
+      # Set up PHP
       - name: Set up PHP
-        uses: shivammathur/setup-php@v2
+        uses:shivammathur/setup-php@v2
         with:
-          php-version: "8.4"
+          php-version: '8.4'  # Or your desired PHP version
 
-      - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist
-
-      - name: Create a new version
+      # Install Composer dependencies
+      - name: Install Composer dependencies
         run: |
-          # Create a new version based on Git tags
-          composer version ${{ github.ref_name }}
+          curl -sS https://getcomposer.org/installer | php
+          php composer.phar install --no-interaction --prefer-dist
 
-      - name: Push changes (if version change)
-        run: git push origin --tags
+      # Set up Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
 
+      # Install Node.js dependencies
+      - name: Install Node.js dependencies
+        run: npm install
+
+      # Run semantic-release (for the JavaScript part)
+      - name: Run semantic-release for JS
+        run: npx semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # Publish the Laravel package to Packagist
       - name: Publish to Packagist
         run: |
-          curl -sS https://api.packagist.org/packages/submit  \
-            -d "repository[url]=https://github.com/zerK4/queryfi-php"  \
-            -d "package[version]=${{ github.ref_name }}" \
-            -d "token=${{ secrets.PACKAGIST_API_KEY }}"
+          curl -sS https://getcomposer.org/installer | php
+          php composer.phar config --global github-oauth.github.com ${{ secrets.GITHUB_TOKEN }}
+          php composer.phar publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PACKAGIST_API_KEY: ${{ secrets.PACKAGIST_API_KEY }}
