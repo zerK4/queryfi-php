@@ -1,7 +1,8 @@
 {
     "name": "z3rka/queryfi",
+    "homepage": "https://queryfi.link/",
     "type": "library",
-    "description": "A laravel package which makes the frontend(js/ts) talk with the backend easier.",
+    "description": "Meet Queryfi – the powerful package that enhances your API interactions with Laravel, offering the flexibility to build dynamic queries directly from your frontend, be it React or any other framework.",
     "keywords": [
         "php",
         "package",
