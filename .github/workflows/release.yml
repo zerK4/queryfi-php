@@ -1,0 +1,39 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*" # Triggers the release workflow when a tag matching 'v*' is pushed.
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Ensure full history to work with tags
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Create a new version
+        run: |
+          # Create a new version based on Git tags
+          composer version ${{ github.ref_name }}
+
+      - name: Push changes (if version change)
+        run: git push origin --tags
+
+      - name: Publish to Packagist
+        run: |
+          curl -sS https://api.packagist.org/packages/submit  \
+            -d "repository[url]=https://github.com/zerK4/queryfi-php"  \
+            -d "package[version]=${{ github.ref_name }}" \
+            -d "token=${{ secrets.PACKAGIST_API_KEY }}"
