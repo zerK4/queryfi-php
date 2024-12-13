@@ -1,4 +1,5 @@
 {
+  "repositoryUrl": "https://github.com/zerK4/queryfi-php",
   "devDependencies": {
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/exec": "^6.0.3",
