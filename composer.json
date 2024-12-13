@@ -1,0 +1,44 @@
+{
+    "name": "z3rka/queryfi",
+    "type": "library",
+    "description": "It makes the frontend communicate with ease with the laravel backend.",
+    "keywords": ["php", "package"],
+    "license": "MIT",
+    "require": {
+        "php": "^8.4",
+        "laravel/framework": "^11.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Z3rka\\Queryfi\\": "src/"
+        },
+        "files": [
+            "src/Helpers/Utils.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Sebastian Pavel",
+            "email": "sebastian.v.pavel@gmail.com"
+        }
+    ],
+    "require-dev": {
+        "pestphp/pest": "^3.7",
+        "mockery/mockery": "^1.6",
+        "orchestra/testbench": "^9.7"
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "scripts": {
+        "test": "pest",
+        "test:coverage": "pest --coverage"
+    }
+}
