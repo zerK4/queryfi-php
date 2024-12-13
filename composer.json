@@ -21,6 +21,7 @@
             "Tests\\": "tests/"
         }
     },
+
     "authors": [
         {
             "name": "Sebastian Pavel",
