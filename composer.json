@@ -1,7 +1,7 @@
 {
     "name": "z3rka/queryfi",
     "type": "library",
-    "description": "It makes the frontend communicate with ease with the laravel backend.",
+    "description": "It makes the frontend communicate with ease with the Laravel backend.",
     "keywords": [
         "php",
         "package"
@@ -25,13 +25,10 @@
             "email": "sebastian.v.pavel@gmail.com"
         }
     ],
-    "require-dev": {
-        "pestphp/pest": "^3.7",
-        "mockery/mockery": "^1.6",
-        "orchestra/testbench": "^9.7"
-    },
-    "repositories": {
-        "type": "vcs",
-        "url": "https://github.com/zerK4/queryfi-php"
-    }
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/zerK4/queryfi-php"
+        }
+    ]
 }
