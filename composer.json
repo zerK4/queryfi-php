@@ -4,7 +4,8 @@
     "description": "A laravel package which makes the frontend(js/ts) talk with the backend easier.",
     "keywords": [
         "php",
-        "package"
+        "package",
+        "laravel"
     ],
     "license": "MIT",
     "require": {
