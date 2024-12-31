@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Z3rka\HasRelations\Helpers\Utils;
-use Collection;
 
 trait HasRelations
 {
@@ -32,8 +31,6 @@ trait HasRelations
 
             if (in_array($request->get("getter"), ["first", "get"])) {
                 return $builder->{$request->get("getter")}();
-            } else {
-                return $builder->get();
             }
 
             return $builder;
@@ -59,14 +56,20 @@ trait HasRelations
     {
         $directMethods = [
             'where' => 'applyWhere',
+            'orWhere' => 'applyWhere',
             'orderBy' => 'applyOrderBy',
             'limit' => 'applyLimit',
             'offset' => 'applyOffset',
         ];
 
         foreach ($directMethods as $param => $method) {
+            Log::info('asdsa', [
+                'param' => $param,
+                'method' => $method
+            ]);
+
             if ($request->has($param)) {
-                $this->{$method}($builder, $request->input($param));
+                $this->{$method}($builder, $request->input($param), $param);
             }
         }
     }
@@ -74,7 +77,7 @@ trait HasRelations
     /**
      * Apply where conditions flexibly.
      */
-    protected function applyWhere(Builder|Relation $query, array $conditions): void
+    protected function applyWhere(Builder|Relation $query, array $conditions, ?string $method): void
     {
         $table = $query->getModel()->getTable();
 
@@ -120,14 +123,20 @@ trait HasRelations
                     }
                     // Handle comparison operators (>, <, >=, <=, !=, =, like, not like)
                     elseif (in_array($operator, ['>', '<', '>=', '<=', '!=', '=', 'like', 'not like'])) {
-                        $query->where("{$table}.{$column}", $operator, $value);
+                        $query->{$method}("{$table}.{$column}", $operator, !!$value);
                     }
                 }
             } else {
-                // Simple equality cond ition
-                $query->where("{$table}.{$column}", '=', $operators);
+                $value = $this->isStringifiedBoolean($operators);
+
+                $query->{$method}("{$table}.{$column}", '=', $value);
             }
         }
+    }
+
+    public function isStringifiedBoolean($value): bool
+    {
+        return $value === 'true' || $value === 'false' ? $value === 'true' : $value;
     }
 
 
