@@ -33,6 +33,10 @@ trait HasRelations
                 return $builder->{$request->get("getter")}();
             }
 
+            if ($request->has('action') && $request->get('action') === 'count') {
+                return $builder->{$request->get("action")}();
+            }
+
             return $builder;
         } catch (Exception $e) {
             Log::error("Query modification failed", ['error' => $e->getMessage()]);
@@ -59,7 +63,7 @@ trait HasRelations
             'orWhere' => 'applyWhere',
             'orderBy' => 'applyOrderBy',
             'limit' => 'applyLimit',
-            'offset' => 'applyOffset',
+            'offset' => 'applyOffset'
         ];
 
         foreach ($directMethods as $param => $method) {
@@ -74,6 +78,8 @@ trait HasRelations
         }
     }
 
+    //TODO: Make `orWhere` method apply same as where.
+
     /**
      * Apply where conditions flexibly.
      */
@@ -84,62 +90,36 @@ trait HasRelations
         foreach ($conditions as $column => $operators) {
             if (is_array($operators)) {
                 foreach ($operators as $operator => $value) {
-                    // Handle the case for ranges (e.g., between, not between)
                     if (in_array($operator, ['whereBetween', 'whereNotBetween'])) {
-                        // Ensure $value can be imploded to an array
                         $value = Utils::stringToArray($value);
-
-                        if (!$value) {
-                            Log::error('Could not convert to array!', [
-                                'params' => $value,
+                        if (!$value || count($value) !== 2) {
+                            Log::error("Invalid between parameters", [
+                                'value' => $value,
                                 'operator' => $operator
                             ]);
-                            return;
-                        }
-
-                        if (count($value) !== 2) {
-                            Log::error('where between || whereNotBetween require no more or less than 2 params', [
-                                'params' => $value,
-                                'operator' => $operator
-                            ]);
-                            return;
+                            continue;
                         }
 
                         $query->{$operator}("{$table}.{$column}", $value);
-                    }
-                    // Handle "in" or "not in" operators
-                    elseif (in_array($operator, ['whereIn', 'whereNotIn'])) {
-                        // Ensure $value is an array
+                    } elseif (in_array($operator, ['whereIn', 'whereNotIn'])) {
                         $value = Utils::stringToArray($value);
                         if (!$value) {
-                            Log::error('Could not convert to array!', [
-                                'params' => $value,
+                            Log::error("Invalid in parameters", [
+                                'value' => $value,
                                 'operator' => $operator
                             ]);
-                            return;
+                            continue;
                         }
-
                         $query->{$operator}("{$table}.{$column}", $value);
-                    }
-                    // Handle comparison operators (>, <, >=, <=, !=, =, like, not like)
-                    elseif (in_array($operator, ['>', '<', '>=', '<=', '!=', '=', 'like', 'not like'])) {
-                        $query->{$method}("{$table}.{$column}", $operator, !!$value);
+                    } elseif (in_array($operator, ['>', '<', '>=', '<=', '!=', '=', 'like', 'not like'])) {
+                        $query->{$method}("{$table}.{$column}", $operator, $value);
                     }
                 }
             } else {
-                $value = $this->isStringifiedBoolean($operators);
-
-                $query->{$method}("{$table}.{$column}", '=', $value);
+                $query->{$method}("{$table}.{$column}", '=', Utils::isStringifiedBoolean($operators));
             }
         }
     }
-
-    public function isStringifiedBoolean($value): bool
-    {
-        return $value === 'true' || $value === 'false' ? $value === 'true' : $value;
-    }
-
-
 
     /**
      * Apply orderBy with flexible syntax.
