@@ -18,7 +18,6 @@ trait HasRelations
     public function withRelation(Request $request, Builder $builder): mixed
     {
         try {
-            // Apply direct query methods first
             $this->applyDirectQueryMethods($request, $builder);
 
             // Apply relationships with nested queries
@@ -36,6 +35,7 @@ trait HasRelations
             if ($request->has('action') && $request->get('action') === 'count') {
                 return $builder->{$request->get("action")}();
             }
+
 
             return $builder;
         } catch (Exception $e) {
@@ -67,18 +67,11 @@ trait HasRelations
         ];
 
         foreach ($directMethods as $param => $method) {
-            Log::info('asdsa', [
-                'param' => $param,
-                'method' => $method
-            ]);
-
             if ($request->has($param)) {
                 $this->{$method}($builder, $request->input($param), $param);
             }
         }
     }
-
-    //TODO: Make `orWhere` method apply same as where.
 
     /**
      * Apply where conditions flexibly.
@@ -170,27 +163,43 @@ trait HasRelations
         if (!$request->has('with')) {
             return;
         }
+
         $relations = is_string($request->input('with'))
             ? explode(",", $request->input('with'))
             : $request->input('with');
 
+        // Group relations and their sub-relations
+        $relationsMap = [];
+
         foreach ($relations as $relation) {
-            $nestedRelations = is_string($relation)
-                ? explode(".", $relation)
-                : $relation;
+            // Check if the relation has nested sub-relations (i.e., square brackets)
+            if (strpos($relation, '[') !== false && strpos($relation, ']') !== false) {
+                // Split relation into base relation and sub-relations
+                preg_match('/(.*?)\[(.*?)\]/', $relation, $matches);
+                $baseRelation = $matches[1];
+                // Replace '&' with ',' and split sub-relations
+                $subRelations = explode("&", str_replace(",", "&", $matches[2]));
+                $relationsMap[$baseRelation] = $subRelations;
+            } else {
+                // If no sub-relations, treat it as a top-level relation
+                $relationsMap[$relation] = [];
+            }
+        }
 
-            $baseRelation = array_shift($nestedRelations);
-
-            $builder->with([
-                $baseRelation => function ($query) use ($nestedRelations, $request, $baseRelation) {
-                    if (!empty($nestedRelations)) {
-                        $query->with(implode(".", $nestedRelations));
+        // Apply the relationships with their sub-relations
+        foreach ($relationsMap as $baseRelation => $subRelations) {
+            $builder->with([$baseRelation => function ($query) use ($subRelations) {
+                if (!empty($subRelations)) {
+                    // Apply the sub-relations dynamically
+                    foreach ($subRelations as $subRelation) {
+                        $query->with($subRelation);
                     }
-                    $this->applyRelationQueryModifiers($query, $request, $baseRelation);
                 }
+            }
             ]);
         }
     }
+
 
     /**
      * Apply query modifiers for related models.
