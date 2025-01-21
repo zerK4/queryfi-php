@@ -26,7 +26,9 @@ trait HasRelations
             // Apply column selection
             $this->applySelect($request, $builder);
 
-            $this->applyPagination($request, $builder);
+            if ($request->has('paginate')) {
+                return $builder->paginate($request->input('paginate'));
+            }
 
             if (in_array($request->get("getter"), ["first", "get"])) {
                 return $builder->{$request->get("getter")}();
@@ -44,14 +46,6 @@ trait HasRelations
         }
     }
 
-    protected function applyPagination(Request $request, Builder $query)
-    {
-        if ($request->has('paginate')) {
-            return $query->paginate($request->input('paginate'));
-        }
-
-        return $query;
-    }
 
     /**
      * Apply direct query methods from the request.
@@ -188,14 +182,15 @@ trait HasRelations
 
         // Apply the relationships with their sub-relations
         foreach ($relationsMap as $baseRelation => $subRelations) {
-            $builder->with([$baseRelation => function ($query) use ($subRelations) {
-                if (!empty($subRelations)) {
-                    // Apply the sub-relations dynamically
-                    foreach ($subRelations as $subRelation) {
-                        $query->with($subRelation);
+            $builder->with([
+                $baseRelation => function ($query) use ($subRelations) {
+                    if (!empty($subRelations)) {
+                        // Apply the sub-relations dynamically
+                        foreach ($subRelations as $subRelation) {
+                            $query->with($subRelation);
+                        }
                     }
                 }
-            }
             ]);
         }
     }
